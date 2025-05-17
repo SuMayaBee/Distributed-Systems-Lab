@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  user-service:
+    build: ./user-service
+    ports:
+      - "8001:8001"
+    environment:
+      - USER_DATABASE_URL=postgresql://postgres:postgres@user-db:5432/user_db
+    depends_on:
+      - user-db
+    networks:
+      - library-network
+
+  book-service:
+    build: ./book-service
+    ports:
+      - "8002:8002"
+    environment:
+      - BOOK_DATABASE_URL=postgresql://postgres:postgres@book-db:5432/book_db
+    depends_on:
+      - book-db
+    networks:
+      - library-network
+
+  loan-service:
+    build: ./loan-service
+    ports:
+      - "8003:8003"
+    environment:
+      - LOAN_DATABASE_URL=postgresql://postgres:postgres@loan-db:5432/loan_db
+      - USER_SERVICE_URL=http://user-service:8001
+      - BOOK_SERVICE_URL=http://book-service:8002
+    depends_on:
+      - loan-db
+      - user-service
+      - book-service
+    networks:
+      - library-network
+
+  user-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=user_db
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - library-network
+
+  book-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=book_db
+    volumes:
+      - book-db-data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+    networks:
+      - library-network
+
+  loan-db:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=loan_db
+    volumes:
+      - loan-db-data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+    networks:
+      - library-network
+
+networks:
+  library-network:
+    driver: bridge
+
+volumes:
+  user-db-data:
+  book-db-data:
+  loan-db-data:
